@@ -48,8 +48,8 @@ class Biometric:
 		b7 = Button(window, text = "Detect", width = 12, command = self.detect)
 		b7.grid(row = 8, column = 2)
 		
-		#b8 = Button(window, text = "Creator", width = 12, command = self.creator)
-		#b8.grid(row = 8, column = 3)
+		b8 = Button(window, text = "Save model", width = 12, command = self.save)
+		b8.grid(row = 8, column = 3)
 		
 		self.list1 = Listbox(window, height = 3, width = 25)
 		self.list1.grid(row = 6, column = 1, columnspan = 3)
