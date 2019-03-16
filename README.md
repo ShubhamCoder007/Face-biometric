@@ -35,3 +35,11 @@ like cats, dogs, birds, human and so on.
 However, I believe if I am able to restrict the region of my image to just the face and then train, then the CNN would learn those region and identify the features better and would as a result perform better and the computation would be very less. It's to some extent like the RCNN approach.
 
 So, now I'll update the program for object classification, and in the next update I'll do that aforementioned biometric task.
+
+------------------------------------------------------------------------------------------------------------
+
+In this update what I thought of was eliminating unnecessary portions of the images to crop and keep only the useful region.
+So, cropping section has been added which will keep only the face and discard the rest. In this manner we should be minimising the
+noise and achieve better results.
+
+
