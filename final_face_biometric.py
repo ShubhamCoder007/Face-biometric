@@ -29,6 +29,10 @@ class Biometric:
 		self.e1 = Entry(window, textvariable = self.roll)
 		self.e1.grid(row = 0, column = 2, rowspan = 2)
 		
+		self.name_ext = StringVar()
+		self.e1 = Entry(window, textvariable = self.name_ext)
+		self.e1.grid(row = 0, column = 4, rowspan = 1)
+		
 		b1 = Button(window, text = "Create profile", width = 12, command = self.create_directory)
 		b1.grid(row = 4, column = 4)
 		
@@ -61,25 +65,28 @@ class Biometric:
 		self.classifier = Sequential()
 
 		# Step 1 - Convolution
-		self.classifier.add(Conv2D(32, (3, 3), input_shape = (64, 64, 3), activation = 'relu'))
-		self.classifier.add(Activation('relu'))
+		self.classifier.add(Conv2D(32, (3, 3), input_shape = (256, 256, 3), activation = 'relu'))
 		
 		# Step 2 - Pooling
 		self.classifier.add(MaxPooling2D(pool_size = (2, 2)))
 
 		# Adding a second convolutional layer
-		self.classifier.add(Conv2D(32, (3, 3), activation = 'relu'))
+		self.classifier.add(Conv2D(64, (3, 3), activation = 'relu'))
+		self.classifier.add(MaxPooling2D(pool_size = (2, 2)))
+		
+		# Adding a third convolutional layer
+		self.classifier.add(Conv2D(128, (3, 3), activation = 'relu'))
 		self.classifier.add(MaxPooling2D(pool_size = (2, 2)))
 
 		# Step 3 - Flattening
 		self.classifier.add(Flatten())
 
 		# Step 4 - Full connection
-		self.classifier.add(Dense(units = 128, activation = 'relu'))
-		self.classifier.add(Dropout(0.15))
-		self.classifier.add(Dense(units = 128, activation = 'relu'))
-		self.classifier.add(Dropout(0.1))
-		self.classifier.add(Dense(units = self.compute_files()+1, activation = 'softmax'))
+		self.classifier.add(Dense(units = 256, activation = 'relu'))
+		self.classifier.add(Dropout(0.2))
+		self.classifier.add(Dense(units = 256, activation = 'relu'))
+		self.classifier.add(Dropout(0.2))
+		self.classifier.add(Dense(units = self.compute_files(), activation = 'softmax'))
 
 		# Compiling the CNN		adam, sparse_categorical_crossentropy  prev setting
 		self.classifier.compile(optimizer = 'rmsprop', loss = 'sparse_categorical_crossentropy', metrics = ['accuracy'])
@@ -117,6 +124,18 @@ class Biometric:
 			
 			_,frame = video.read()		#1st is the boolean, 2nd array of image
 
+			try:
+
+				cascade_obj = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+				face = cascade_obj.detectMultiScale(frame, scaleFactor = 1.05, minNeighbors = 5)
+				face = face.tolist()[0]
+				x,y,w,h = face
+				frame = frame[y:y+h, x:x+w]
+
+			except ValueError:
+				pass
+					
+			
 			cv2.imshow("Capturing",frame)
 			key = cv2.waitKey(1)
 			
@@ -124,9 +143,9 @@ class Biometric:
 				break
 				
 			if frame_no % 10 == 8 or frame_no % 10 == 9:
-				cv2.imwrite('dataset/' + '/test_set/' + self.roll.get()+'/' + str(frame_no)+'.jpg', frame)
+				cv2.imwrite('dataset/' + '/test_set/' + self.roll.get()+'/'+ self.name_ext.get() + str(frame_no)+'.jpg', frame)
 			else:
-				cv2.imwrite('dataset/' + '/training_set/' +self.roll.get()+'/'+str(frame_no)+'.jpg', frame)
+				cv2.imwrite('dataset/' + '/training_set/' +self.roll.get()+'/'+ self.name_ext.get()+str(frame_no)+'.jpg', frame)
 			
 			frame_no = frame_no + 1
 
@@ -162,19 +181,19 @@ class Biometric:
 		test_datagen = ImageDataGenerator(rescale = 1./255)
 
 		training_set = train_datagen.flow_from_directory('dataset/training_set',
-														 target_size = (64, 64),
+														 target_size = (256, 256),
 														 batch_size = 32,
 														 class_mode = 'sparse')
 
 		test_set = test_datagen.flow_from_directory('dataset/test_set',
-													target_size = (64, 64),
+													target_size = (256, 256),
 													batch_size = 32,
 													class_mode = 'sparse')
 
 		#with tf.device('/CPU:2'):
 		self.classifier.fit_generator(training_set,
 								 steps_per_epoch = self.compute_files()*160,
-								 epochs = 1,
+								 epochs = 2,
 								 validation_data = test_set,
 								 validation_steps = self.compute_files()*40)
 								 
@@ -194,10 +213,25 @@ class Biometric:
 		video = cv2.VideoCapture(0)
 
 		_, test_img = video.read()
+	
+		try:
+
+			cascade_obj = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+			face = cascade_obj.detectMultiScale(test_img, scaleFactor = 1.05, minNeighbors = 5)
+			face = face.tolist()[0]
+			x,y,w,h = face
+			test_img = test_img[y:y+h, x:x+w]
+
+		except ValueError:
+			print("Was unable to bound for face!")
+	
 		cv2.imwrite('capture.jpg',test_img)
 	
-		test_img = image.load_img('capture.jpg', target_size = (64, 64))
+		test_img = image.load_img('capture.jpg', target_size = (256, 256))
 		test_img = image.img_to_array(test_img)
+		
+		#expanding the dim, because predict takes a dim of 4, it is for batch of img 
+		#So even for single img we have to place it as a batch
 		test_img = np.expand_dims(test_img, axis = 0)
 	
 		result = self.classifier.predict(test_img)
@@ -209,18 +243,18 @@ class Biometric:
 		#categories = training_set.class_indices
 		
 		self.categories = self.dic_load()
+		print(self.categories)
 		
-
-		for i in range(0,len(result)):
-			if result[i] == 1:
+		j = 0
+		for i in result:
+			if i == 1:
 				break
-			i = i + 1
-		
+			j = j + 1
 		
 		self.list1.delete(0,END)
 		self.list1.insert(END,"Detected")
 		self.list1.insert(END,"Student Roll: ")
-		self.list1.insert(END, self.categories[i])
+		self.list1.insert(END, self.categories[j])
 	
 	
 	
