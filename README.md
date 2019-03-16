@@ -24,3 +24,14 @@ the participation of the dropout for the same purpose.
 Why it would succeed well in this operation?
 In the end, we want to stand infront of the camera and the program would detect exactly the identity.
 Since, there wouldn't be any expected challenge to detect, such as, distortion we would have a straight forward approach.
+
+========================================================================================================================================
+Updates, problems discovered, how it can be better used?
+
+Well this system harnesses the working mechanism of a traditional Convolutional Neural Network, so it would be very difficult and the accuracy wouldn't be nice to distinguish between individuals, and hence I discovered after many training sessions and parameter tunings that it wasn't doing well enough.
+It'll however work pretty good in classification problems where we would have distinct features to discriminate and identify.
+like cats, dogs, birds, human and so on.
+
+However, I believe if I am able to restrict the region of my image to just the face and then train, then the CNN would learn those region and identify the features better and would as a result perform better and the computation would be very less. It's to some extent like the RCNN approach.
+
+So, now I'll update the program for object classification, and in the next update I'll do that aforementioned biometric task.
