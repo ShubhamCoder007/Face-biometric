@@ -42,4 +42,17 @@ In this update what I thought of was eliminating unnecessary portions of the ima
 So, cropping section has been added which will keep only the face and discard the rest. In this manner we should be minimising the
 noise and achieve better results.
 
+-------------------------------------------------------------------------------------------------------
+
+The model has been tested and it has performed well and was able to identify the subjects correctly.
+
+>>> How to use it correctly?
+try to be infront of the camera close with little movements of your head so that all the possible orientations could be
+recorded. After properly gathering the data and training it, when you test the subject, keep him in front of the camera
+as he would be in any other visual biometric record.
+
+In the next update I'll add frame number section so that the user could manually set the number of frames he want.
+Also, discard bad image would be there to discard the image which are not usable for training purpose.
+
+Finally, I'll use some advanced CNN algorithm that are actually used now to achieve best results possible in any possible Orientation.
 
